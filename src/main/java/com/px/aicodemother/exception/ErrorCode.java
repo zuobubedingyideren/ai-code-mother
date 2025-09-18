@@ -1,6 +1,7 @@
 package com.px.aicodemother.exception;
 
 import lombok.Getter;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * packageName: com.px.aicodemother.exception
@@ -12,6 +13,7 @@ import lombok.Getter;
  * @description: 错误码枚举类
  */
 @Getter
+@Schema(description = "错误码枚举类")
 public enum ErrorCode {
 
     SUCCESS(0, "ok"),
@@ -26,11 +28,13 @@ public enum ErrorCode {
     /**
      * 状态码
      */
+    @Schema(description = "状态码")
     private final int code;
 
     /**
      * 状态码信息
      */
+    @Schema(description = "状态码信息")
     private final String message;
 
     /**

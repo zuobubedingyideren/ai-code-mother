@@ -2,6 +2,7 @@ package com.px.aicodemother.common;
 
 import com.px.aicodemother.exception.ErrorCode;
 import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 
@@ -15,21 +16,25 @@ import java.io.Serializable;
  * @description: 封装通用响应结果类
  */
 @Data
+@Schema(description = "通用响应结果类")
 public class BaseResponse<T> implements Serializable {
 
     /**
      * 状态码
      */
+    @Schema(description = "状态码")
     private int code;
 
     /**
      * 数据
      */
+    @Schema(description = "数据")
     private T data;
 
     /**
      * 错误信息
      */
+    @Schema(description = "错误信息")
     private String message;
 
     /**
