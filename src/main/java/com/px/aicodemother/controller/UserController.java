@@ -16,14 +16,10 @@ import com.px.aicodemother.model.vo.user.UserVO;
 import com.px.aicodemother.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -46,7 +42,7 @@ public class UserController {
      * @param userRegisterRequest 用户注册请求体
      * @return 新用户id
      */
-    @RequestMapping("/register")
+    @PostMapping("/register")
     @Operation(summary = "用户注册", description = "用户注册",
         parameters = {
             @Parameter(name = "userRegisterRequest", description = "用户注册请求参数"),
