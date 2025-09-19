@@ -12,13 +12,13 @@ import java.time.LocalDateTime;
  *
  * @author: idpeng
  * @version: 1.0
- * @className: LoginUserVo
+ * @className: LoginUserVO
  * @date: 2025/9/17 23:41
- * @description:
+ * @description: 登录用户视图对象
  */
 @Data
 @Schema(description = "登录用户视图对象")
-public class LoginUserVo implements Serializable {
+public class LoginUserVO implements Serializable {
     /**
      * 用户 id
      */

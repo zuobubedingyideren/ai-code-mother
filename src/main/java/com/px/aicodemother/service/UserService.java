@@ -4,7 +4,6 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
 import com.px.aicodemother.model.dto.user.UserQueryRequest;
 import com.px.aicodemother.model.entity.User;
-import com.px.aicodemother.model.vo.user.LoginUserVo;
 import com.px.aicodemother.model.vo.user.UserVO;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,7 +42,7 @@ public interface UserService extends IService<User> {
      * @param user 用户
      * @return 登录用户视图
      */
-    LoginUserVo getLoginUserVo(User user);
+    UserVO getLoginUserVo(User user);
 
 
     /**
@@ -54,7 +53,7 @@ public interface UserService extends IService<User> {
      * @param request      请求
      * @return 脱敏后的用户信息
      */
-    LoginUserVo userLogin(String userAccount, String userPassword, HttpServletRequest request);
+    UserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
     /**
      * 获取当前登录用户

@@ -20,7 +20,7 @@ import java.util.Map;
 public class MyBatisCodeGenerator {
 
     // 需要生成的表名
-    private static final String[] TABLE_NAMES = {"user"};
+    private static final String[] TABLE_NAMES = {"app"};
 
     /**
      * MyBatis代码生成器主入口方法

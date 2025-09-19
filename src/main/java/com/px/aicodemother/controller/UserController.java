@@ -11,7 +11,6 @@ import com.px.aicodemother.exception.ErrorCode;
 import com.px.aicodemother.exception.ThrowUtils;
 import com.px.aicodemother.model.dto.user.*;
 import com.px.aicodemother.model.entity.User;
-import com.px.aicodemother.model.vo.user.LoginUserVo;
 import com.px.aicodemother.model.vo.user.UserVO;
 import com.px.aicodemother.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,11 +68,11 @@ public class UserController {
             @Parameter(name = "userLoginRequest", description = "用户登录请求参数"),
             @Parameter(name = "request", description = "请求")
         })
-    public BaseResponse<LoginUserVo> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
+    public BaseResponse<UserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(userLoginRequest == null, ErrorCode.PARAMS_ERROR );
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
-        LoginUserVo result = userService.userLogin(userAccount, userPassword, request);
+        UserVO result = userService.userLogin(userAccount, userPassword, request);
         return ResultUtils.success(result);
     }
 
@@ -85,7 +84,7 @@ public class UserController {
      */
     @GetMapping("/get/login")
     @Operation(summary = "获取当前登录用户", description = "获取当前登录用户", parameters = {@Parameter(name = "request", description = "请求")})
-    public BaseResponse<LoginUserVo> getLoginUser(HttpServletRequest request) {
+    public BaseResponse<UserVO> getLoginUser(HttpServletRequest request) {
         ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR );
         // 获取当前登录用户并转换为视图对象
         User result = userService.getLoginUser(request);

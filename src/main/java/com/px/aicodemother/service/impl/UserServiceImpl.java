@@ -12,7 +12,6 @@ import com.px.aicodemother.mapper.UserMapper;
 import com.px.aicodemother.model.dto.user.UserQueryRequest;
 import com.px.aicodemother.model.entity.User;
 import com.px.aicodemother.model.enums.UserRoleEnum;
-import com.px.aicodemother.model.vo.user.LoginUserVo;
 import com.px.aicodemother.model.vo.user.UserVO;
 import com.px.aicodemother.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -102,11 +101,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>  implements U
      * @return 登录用户视图对象，如果用户为空则返回null
      */
     @Override
-    public LoginUserVo getLoginUserVo(User user) {
+    public UserVO getLoginUserVo(User user) {
         if (user == null) {
             return null;
         }
-        LoginUserVo loginUserVo = new LoginUserVo();
+        UserVO loginUserVo = new UserVO();
         BeanUtil.copyProperties(user, loginUserVo);
         return loginUserVo;
     }
@@ -121,7 +120,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>  implements U
      * @return 登录用户视图对象
      */
     @Override
-    public LoginUserVo userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+    public UserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         // 参数校验
         if (StrUtil.hasBlank(userAccount, userPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
