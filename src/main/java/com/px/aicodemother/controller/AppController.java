@@ -14,10 +14,7 @@ import com.px.aicodemother.constants.UserConstant;
 import com.px.aicodemother.exception.BusinessException;
 import com.px.aicodemother.exception.ErrorCode;
 import com.px.aicodemother.exception.ThrowUtils;
-import com.px.aicodemother.model.dto.app.AppAddRequest;
-import com.px.aicodemother.model.dto.app.AppAdminUpdateRequest;
-import com.px.aicodemother.model.dto.app.AppQueryRequest;
-import com.px.aicodemother.model.dto.app.AppUpdateRequest;
+import com.px.aicodemother.model.dto.app.*;
 import com.px.aicodemother.model.entity.App;
 import com.px.aicodemother.model.entity.User;
 import com.px.aicodemother.model.enums.CodeGenTypeEnum;
@@ -374,7 +371,7 @@ public class AppController {
      * @return 生成的代码内容流
      */
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @Operation(summary = "获取应用信息", description = "获取应用信息",
+    @Operation(summary = "生成代码", description = "获取应用信息",
             parameters = {
                 @Parameter(name = "appId", description = "应用ID"),
                 @Parameter(name = "message", description = "用户消息"),
@@ -408,5 +405,34 @@ public class AppController {
                                 .data("")
                                 .build()
                 ));
+    }
+
+
+
+    /**
+     * 部署应用程序
+     *
+     * @param appDeployRequest 应用部署请求参数，包含要部署的应用ID等信息
+     * @param request          HTTP请求对象，用于获取当前登录用户信息
+     * @return 部署成功后的URL地址
+     */
+    @PostMapping("/deploy")
+    @Operation(summary = "部署应用", description = "部署应用",
+            parameters = {
+                    @Parameter(name = "appDeployRequest", description = "应用部署请求参数"),
+                    @Parameter(name = "request", description = "请求")})
+    public BaseResponse<String> deployApp(@RequestBody AppDeployRequest appDeployRequest, HttpServletRequest request) {
+        // 参数校验
+        ThrowUtils.throwIf(appDeployRequest == null, ErrorCode.PARAMS_ERROR);
+
+        Long appId = appDeployRequest.getAppId();
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "appId错误");
+
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+
+        // 调用服务执行应用部署
+        String deployUrl = appService.deployApp(appId, loginUser);
+        return ResultUtils.success(deployUrl);
     }
 }
