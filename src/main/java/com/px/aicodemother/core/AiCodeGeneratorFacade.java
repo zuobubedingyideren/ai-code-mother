@@ -1,6 +1,7 @@
 package com.px.aicodemother.core;
 
 import com.px.aicodemother.ai.AiCodeGeneratorService;
+import com.px.aicodemother.ai.AiCodeGeneratorServiceFactory;
 import com.px.aicodemother.ai.model.HtmlCodeResult;
 import com.px.aicodemother.ai.model.MultiFileCodeResult;
 import com.px.aicodemother.core.parser.CodeParserExecutor;
@@ -28,8 +29,9 @@ import java.io.File;
 @Service
 public class AiCodeGeneratorFacade {
 
+
     @Resource
-    private AiCodeGeneratorService aiCodeGeneratorService;
+    private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
     /**
      * 根据用户消息和代码生成类型生成并保存代码
@@ -42,6 +44,7 @@ public class AiCodeGeneratorFacade {
         if (codeGenType == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenType) {
             case HTML -> {
                 HtmlCodeResult htmlCodeResult = aiCodeGeneratorService.generateHtmlCode(userMessage);
@@ -69,6 +72,7 @@ public class AiCodeGeneratorFacade {
         if (codeGenType == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenType) {
             case HTML -> {
                 Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);

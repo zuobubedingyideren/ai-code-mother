@@ -53,9 +53,8 @@ public class ChatHistoryController {
             parameters = {
                     @Parameter(name = "appId", description = "应用id"),
                     @Parameter(name = "pageSize", description = "分页大小"),
-                    @Parameter(name = "lastCreateTime", description = "游标查询 - 最后一条记录的创建时间"),
-                    @Parameter(name = "request", description = "请求")
-            })
+                    @Parameter(name = "lastCreateTime", description = "游标查询 - 最后一条记录的创建时间")
+    })
     public BaseResponse<Page<ChatHistory>> listAppChatHistory(@PathVariable Long appId,
                                                               @RequestParam(defaultValue = "10") int pageSize,
                                                               @RequestParam(required = false) LocalDateTime lastCreateTime,
