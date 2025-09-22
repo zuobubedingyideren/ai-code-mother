@@ -38,13 +38,14 @@ public class AiCodeGeneratorFacade {
      *
      * @param userMessage 用户提供的生成要求消息
      * @param codeGenType 代码生成类型枚举
+     * @param appId       应用ID
      * @return 保存代码文件的目录File对象
      */
     public File generateAndSaveCode(String userMessage, CodeGenTypeEnum codeGenType, Long appId) {
         if (codeGenType == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenType);
         return switch (codeGenType) {
             case HTML -> {
                 HtmlCodeResult htmlCodeResult = aiCodeGeneratorService.generateHtmlCode(userMessage);
@@ -72,7 +73,7 @@ public class AiCodeGeneratorFacade {
         if (codeGenType == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenType);
         return switch (codeGenType) {
             case HTML -> {
                 Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
@@ -80,6 +81,10 @@ public class AiCodeGeneratorFacade {
             }
             case MULTI_FILE -> {
                 Flux<String> codeStream = aiCodeGeneratorService.generateMultiFileCodeStream(userMessage);
+                yield processCodeStream(codeStream, codeGenType, appId);
+            }
+            case VUE_PROJECT -> {
+                Flux<String> codeStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
                 yield processCodeStream(codeStream, codeGenType, appId);
             }
             default -> {

@@ -1,0 +1,38 @@
+# 使用官方Redis镜像作为基础镜像
+FROM redis:8.2
+
+# 设置维护者信息
+LABEL maintainer="3098263664@qq.com"
+LABEL description="Redis container with no password authentication and remote access enabled"
+
+# 创建Redis配置目录
+RUN mkdir -p /usr/local/etc/redis
+
+# 复制自定义Redis配置文件
+COPY redis.conf /usr/local/etc/redis/redis.conf
+
+# 创建Redis用户和组（如果不存在）
+RUN addgroup -g 999 redis && adduser -D -s /bin/sh -u 999 -G redis redis || true
+
+# 设置数据目录权限
+RUN chown -R redis:redis /data && \
+    chown -R redis:redis /usr/local/etc/redis
+
+# 暴露Redis端口
+EXPOSE 6379
+
+# 设置数据卷
+VOLUME ["/data", "/usr/local/etc/redis"]
+
+# 切换到redis用户（安全最佳实践）
+USER redis
+
+# 设置工作目录
+WORKDIR /data
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD redis-cli ping || exit 1
+
+# 启动Redis服务器，使用自定义配置文件
+CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]

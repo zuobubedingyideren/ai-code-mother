@@ -38,4 +38,24 @@ class AiCodeGeneratorFacadeTest {
             })
             .blockLast(); // 只阻塞等待最后一个元素，但过程中会实时输出
     }
+
+    @Test
+    void generateVueProjectCodeStream() {
+        Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream(
+                "简单的任务记录网站，总代码量不超过 200 行",
+                CodeGenTypeEnum.VUE_PROJECT, 1L);
+        /// 流式处理，实时打印每个片段
+        codeStream
+                .doOnNext(chunk -> {
+                    System.out.print(chunk); // 实时打印每个代码片段
+                    System.out.flush();
+                })
+                .doOnComplete(() -> {
+                    System.out.println("\n=== 流式输出完成 ===");
+                })
+                .doOnError(error -> {
+                    System.err.println("流式输出出错: " + error.getMessage());
+                })
+                .blockLast(); // 只阻塞等待最后一个元素，但过程中会实时输出
+    }
 }
