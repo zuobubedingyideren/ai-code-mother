@@ -24,6 +24,7 @@ import com.px.aicodemother.model.vo.app.AppVO;
 import com.px.aicodemother.model.vo.user.UserVO;
 import com.px.aicodemother.service.AppService;
 import com.px.aicodemother.service.ChatHistoryService;
+import com.px.aicodemother.service.ScreenshotService;
 import com.px.aicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +63,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
 
     @Resource
     private VueProjectBuilder vueProjectBuilder;
+
+    @Resource
+    private ScreenshotService screenshotService;
 
     /**
      * 根据实体查询VO转换
@@ -264,7 +268,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "更新应用部署信息失败");
 
         // 返回应用访问地址
-        return String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        String appDeployUrl = String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        this.generateAppScreenshotAsync(appId, appDeployUrl);
+        return appDeployUrl;
     }
 
     /**
@@ -296,5 +302,26 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
 
         // 删除应用本身
         return super.removeById(appId);
+    }
+
+    /**
+     * 异步生成应用截图
+     *
+     * @param appId 应用ID
+     * @param appUrl 应用访问地址
+     */
+    @Override
+    public void generateAppScreenshotAsync(Long appId, String appUrl) {
+        // 使用虚拟线程异步执行
+        Thread.startVirtualThread(() -> {
+            // 调用截图服务生成截图并上传
+            String screenshotUrl = screenshotService.generateAndUploadScreenshot(appUrl);
+            // 更新应用封面字段
+            App updateApp = new App();
+            updateApp.setId(appId);
+            updateApp.setCover(screenshotUrl);
+            boolean updated = this.updateById(updateApp);
+            ThrowUtils.throwIf(!updated, ErrorCode.OPERATION_ERROR, "更新应用封面字段失败");
+        });
     }
 }
