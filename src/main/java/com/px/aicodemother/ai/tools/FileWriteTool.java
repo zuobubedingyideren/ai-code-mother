@@ -1,10 +1,13 @@
 package com.px.aicodemother.ai.tools;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.json.JSONObject;
 import com.px.aicodemother.constants.AppConstant;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,7 +25,8 @@ import java.nio.file.StandardOpenOption;
  * @description: 文件写入工具类
  */
 @Slf4j
-public class FileWriteTool {
+@Component
+public class FileWriteTool extends BaseTool{
 
     /**
      * 写入文件到指定路径
@@ -65,5 +69,44 @@ public class FileWriteTool {
             log.error(errorMessage, e);
             return errorMessage;
         }
+    }
+
+    /**
+     * 获取工具名称
+     *
+     * @return 工具名称
+     */
+    @Override
+    public String getToolName() {
+        return "writeFile";
+    }
+
+    /**
+     * 获取工具显示名称
+     *
+     * @return 工具显示名称
+     */
+    @Override
+    public String getDisplayName() {
+        return "写入文件";
+    }
+
+    /**
+     * 生成工具调用结果
+     *
+     * @param arguments 工具参数
+     * @return 工具调用结果
+     */
+    @Override
+    public String generateToolExecutedResult(JSONObject arguments) {
+        String relativeFilePath = arguments.getStr("relativeFilePath");
+        String suffix = FileUtil.getSuffix(relativeFilePath);
+        String content = arguments.getStr("content");
+        return String.format("""
+                        [工具调用] %s %s
+                        ```%s
+                        %s
+                        ```
+                        """, getDisplayName(), relativeFilePath, suffix, content);
     }
 }
