@@ -20,18 +20,21 @@ import com.px.aicodemother.model.entity.User;
 import com.px.aicodemother.model.enums.CodeGenTypeEnum;
 import com.px.aicodemother.model.vo.app.AppVO;
 import com.px.aicodemother.service.AppService;
+import com.px.aicodemother.service.ProjectDownloadService;
 import com.px.aicodemother.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +54,9 @@ public class AppController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private ProjectDownloadService projectDownloadService;
 
     /**
      * 添加应用
@@ -435,4 +441,48 @@ public class AppController {
         String deployUrl = appService.deployApp(appId, loginUser);
         return ResultUtils.success(deployUrl);
     }
+
+    /**
+     * 下载应用代码
+     *
+     * @param appId 应用ID
+     * @param request HTTP请求对象，用于获取当前登录用户信息
+     * @param response HTTP响应对象，用于返回下载的文件
+     */
+    @GetMapping("/download/{appId}")
+    @Operation(summary = "下载应用代码", description = "下载应用代码",
+            parameters = {
+                    @Parameter(name = "appId", description = "应用ID"),
+                    @Parameter(name = "request", description = "请求"),
+                    @Parameter(name = "response", description = "响应")
+            })
+    public void downloadAppCode(@PathVariable Long appId, HttpServletRequest request, HttpServletResponse response) {
+        // 基础教育
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "appId错误");
+        // 查询应用信息
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+
+        // 验证权限：只有应用创建者和管理员可以下载
+        User loginUser = userService.getLoginUser(request);
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR,  "无权限下载该应用代码");
+        }
+
+        // 构建应用代码目录路径
+        String codeGenType = app.getCodeGenType();
+        String sourceDirName = codeGenType + "_" + appId;
+        String sourceDirPath = AppConstant.CODE_OUTPUT_ROOT_DIR + File.separator + sourceDirName;
+
+        // 检查代码目录是否存在
+        File sourceDir = new File(sourceDirPath);
+        ThrowUtils.throwIf(!sourceDir.exists() || !sourceDir.isDirectory(), ErrorCode.NOT_FOUND_ERROR, "应用代码不存在，请先生成代码");
+
+        // 创建下载文件
+        String downloadFileName = String.valueOf(appId);
+
+        // 调用通用下载服务
+        projectDownloadService.downloadProjectAsZip(sourceDirPath, downloadFileName, response);
+    }
+
 }
