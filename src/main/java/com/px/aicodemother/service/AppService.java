@@ -2,6 +2,7 @@ package com.px.aicodemother.service;
 
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
+import com.px.aicodemother.model.dto.app.AppAddRequest;
 import com.px.aicodemother.model.dto.app.AppQueryRequest;
 import com.px.aicodemother.model.entity.App;
 import com.px.aicodemother.model.entity.User;
@@ -16,6 +17,15 @@ import java.util.List;
  * @author px
  */
 public interface AppService extends IService<App> {
+
+    /**
+     * 创建应用。
+     *
+     * @param appAddRequest 应用添加参数。
+     * @param loginUser 登录用户。
+     * @return 新增后的应用。
+     */
+    Long createApp(AppAddRequest appAddRequest, User loginUser);
 
     /**
      * 获取应用视图对象。

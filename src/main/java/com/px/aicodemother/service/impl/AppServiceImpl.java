@@ -7,6 +7,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import com.px.aicodemother.ai.AiCodeGenTypeRoutingService;
 import com.px.aicodemother.constants.AppConstant;
 import com.px.aicodemother.core.AiCodeGeneratorFacade;
 import com.px.aicodemother.core.builder.VueProjectBuilder;
@@ -15,6 +16,7 @@ import com.px.aicodemother.exception.BusinessException;
 import com.px.aicodemother.exception.ErrorCode;
 import com.px.aicodemother.exception.ThrowUtils;
 import com.px.aicodemother.mapper.AppMapper;
+import com.px.aicodemother.model.dto.app.AppAddRequest;
 import com.px.aicodemother.model.dto.app.AppQueryRequest;
 import com.px.aicodemother.model.entity.App;
 import com.px.aicodemother.model.entity.User;
@@ -66,6 +68,35 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
 
     @Resource
     private ScreenshotService screenshotService;
+
+    @Resource
+    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
+
+    @Override
+    public Long createApp(AppAddRequest appAddRequest, User loginUser) {
+        // 检查初始化提示词是否为空
+        String initPrompt = appAddRequest.getInitPrompt();
+        ThrowUtils.throwIf(StrUtil.isBlank(initPrompt), ErrorCode.PARAMS_ERROR, "初始化提示词不能为空");
+        // 检查初始化提示词长度是否超过限制
+        ThrowUtils.throwIf(initPrompt.length() > 8000, ErrorCode.PARAMS_ERROR, "初始化提示词长度不能超过8000字符");
+
+        // ai智能选择代码生成类型
+        CodeGenTypeEnum codeGenType = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
+
+        // 构建应用对象，设置初始化提示词、用户ID和应用名称等信息
+        App app = App.builder()
+                .initPrompt(initPrompt)
+                .userId(loginUser.getId())
+                .appName(initPrompt.substring(0, Math.min(initPrompt.length(), 12)))
+                .codeGenType(codeGenType.getValue())
+                .build();
+
+        // 保存应用信息
+        boolean result = this.save(app);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        log.info("应用创建成功，ID: {}, 类型: {}", app.getId(), codeGenType.getValue());
+        return app.getId();
+    }
 
     /**
      * 根据实体查询VO转换

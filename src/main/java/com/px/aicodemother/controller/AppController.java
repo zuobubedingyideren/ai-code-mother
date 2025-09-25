@@ -17,7 +17,6 @@ import com.px.aicodemother.exception.ThrowUtils;
 import com.px.aicodemother.model.dto.app.*;
 import com.px.aicodemother.model.entity.App;
 import com.px.aicodemother.model.entity.User;
-import com.px.aicodemother.model.enums.CodeGenTypeEnum;
 import com.px.aicodemother.model.vo.app.AppVO;
 import com.px.aicodemother.service.AppService;
 import com.px.aicodemother.service.ProjectDownloadService;
@@ -72,24 +71,9 @@ public class AppController {
                 @Parameter(name = "request", description = "请求")})
     public BaseResponse<Long> addApp(@RequestBody AppAddRequest appAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(appAddRequest == null, ErrorCode.PARAMS_ERROR);
-        // 检查初始化提示词是否为空
-        String initPrompt = appAddRequest.getInitPrompt();
-        ThrowUtils.throwIf(StrUtil.isBlank(initPrompt), ErrorCode.PARAMS_ERROR, "初始化提示词不能为空");
-
-        // 获取当前登录用户
         User loginUser = userService.getLoginUser(request);
-        // 构建应用对象，设置初始化提示词、用户ID和应用名称等信息
-        App app = App.builder()
-                .initPrompt(initPrompt)
-                .userId(loginUser.getId())
-                .appName(initPrompt.substring(0, Math.min(initPrompt.length(), 12)))
-                .codeGenType(CodeGenTypeEnum.MULTI_FILE.getValue())
-                .build();
-
-        // 保存应用信息
-        boolean result = appService.save(app);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        return ResultUtils.success(app.getId());
+        Long appId = appService.createApp(appAddRequest, loginUser);
+        return ResultUtils.success(appId);
     }
 
     /**
