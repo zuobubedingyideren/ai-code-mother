@@ -7,6 +7,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Duration;
+
 /**
  * packageName: com.px.aicodemother.config
  *
@@ -34,7 +36,7 @@ public class ReasoningStreamingChatModelConfig {
         // 为了测试方便临时修改
         final String modelName = "deepseek-chat";
         final int maxTokens = 8192;
-        // 生产环境使用：
+        // 生产环境：
         // final String modelName = "deepseek-reasoner";
         // final int maxTokens = 32768;
         return OpenAiStreamingChatModel.builder()
@@ -42,6 +44,10 @@ public class ReasoningStreamingChatModelConfig {
                 .baseUrl(baseUrl)
                 .modelName(modelName)
                 .maxTokens(maxTokens)
+                .parallelToolCalls(true)
+                .strictTools(true)
+                // 添加超时设置
+                .timeout(Duration.ofMinutes(10))  
                 .logRequests(true)
                 .logResponses(true)
                 .build();

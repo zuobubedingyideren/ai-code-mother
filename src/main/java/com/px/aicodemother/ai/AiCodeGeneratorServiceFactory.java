@@ -91,15 +91,18 @@ public class AiCodeGeneratorServiceFactory {
      */
     private AiCodeGeneratorService createAiCodeGeneratorService(long appId, CodeGenTypeEnum codeGenType) {
         log.info("为 appId: {} 创建新的 AI 服务实例", appId);
-        // 根据 appId 构建独立的对话记忆
         MessageWindowChatMemory chatMemory = MessageWindowChatMemory
                 .builder()
                 .id(appId)
                 .chatMemoryStore(redisChatMemoryStore)
-                .maxMessages(20)
+                .maxMessages(50)
                 .build();
-        // 从数据库中加载对话历史到记忆中
-        chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 20);
+        
+        // 只为非工具调用类型从数据库加载历史消息
+        if (codeGenType != CodeGenTypeEnum.VUE_PROJECT) {
+            chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 50);
+        }
+        
         return switch (codeGenType) {
             case VUE_PROJECT -> AiServices.builder(AiCodeGeneratorService.class)
                     .chatModel(chatModel)

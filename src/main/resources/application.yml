@@ -34,3 +34,12 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
+
+mermaid:
+  chrome:
+    executable:
+      path: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"  # Windows 示例
+      # path: "/usr/bin/google-chrome"  # Linux 示例
+      # path: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"  # macOS 示例
+  puppeteer:
+    timeout: 30000  # 超时时间（毫秒），默认 30 秒
