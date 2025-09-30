@@ -38,28 +38,21 @@ public class ProjectBuilderNode {
             String generatedCodeDir = context.getGeneratedCodeDir();
             CodeGenTypeEnum generationType = context.getGenerationType();
             String buildResultDir;
+            try {
+                VueProjectBuilder vueBuilder = SpringContextUtil.getBean(VueProjectBuilder.class);
 
-            // 对于Vue项目，需要进行专门的构建处理
-            if (generationType == CodeGenTypeEnum.VUE_PROJECT) {
-                try {
-                    VueProjectBuilder vueBuilder = SpringContextUtil.getBean(VueProjectBuilder.class);
-
-                    // 调用Vue项目构建器进行项目构建
-                    boolean buildSuccess = vueBuilder.buildProject(generatedCodeDir);
-                    if (buildSuccess) {
-                        // 构建成功，返回构建结果目录
-                        buildResultDir = generatedCodeDir + File.separator + "dist";
-                        log.info("Vue 项目构建成功，dist 目录: {}", buildResultDir);
-                    } else {
-                        throw new BusinessException(ErrorCode.SYSTEM_ERROR, "vue项目构建失败");
-                    }
-                } catch (Exception e) {
-                    log.error("Vue 项目构建异常: {}", e.getMessage(), e);
-                    // 异常时返回原路径
-                    buildResultDir = generatedCodeDir;
+                // 调用Vue项目构建器进行项目构建
+                boolean buildSuccess = vueBuilder.buildProject(generatedCodeDir);
+                if (buildSuccess) {
+                    // 构建成功，返回构建结果目录
+                    buildResultDir = generatedCodeDir + File.separator + "dist";
+                    log.info("Vue 项目构建成功，dist 目录: {}", buildResultDir);
+                } else {
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "vue项目构建失败");
                 }
-            } else {
-                // HTML 和 MULTI_FILE 代码生成时已经保存了，直接使用生成的代码目录
+            } catch (Exception e) {
+                log.error("Vue 项目构建异常: {}", e.getMessage(), e);
+                // 异常时返回原路径
                 buildResultDir = generatedCodeDir;
             }
 
