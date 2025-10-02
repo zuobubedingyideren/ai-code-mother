@@ -120,6 +120,7 @@ public class CodeGenSubgraphWorkflow {
                     .addNode("image_aggregator", ImageAggregatorNode.create())
 
                     // 并发子图分支：从计划节点分发到各个子图
+                    .addEdge(START, "image_plan")
                     .addEdge("image_plan", "content_image_subgraph")
                     .addEdge("image_plan", "illustration_subgraph")
                     .addEdge("image_plan", "diagram_subgraph")
