@@ -1,5 +1,6 @@
 package com.px.aicodemother.langgraph4j;
 
+import cn.hutool.json.JSONUtil;
 import com.px.aicodemother.exception.BusinessException;
 import com.px.aicodemother.exception.ErrorCode;
 import com.px.aicodemother.langgraph4j.model.QualityResult;
@@ -13,6 +14,8 @@ import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.NodeOutput;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.prebuilt.MessagesStateGraph;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 import java.util.Map;
 
@@ -71,9 +74,12 @@ public class CodeGenWorkflow {
                     .addConditionalEdges("code_quality_check",
                             edge_async(this::routeAfterQualityCheck),
                             Map.of(
-                                    "build", "project_builder",   // 质检通过且需要构建
-                                    "skip_build", END,            // 质检通过但跳过构建
-                                    "fail", "code_generator"      // 质检失败，重新生成
+                                    // 质检通过且需要构建
+                                    "build", "project_builder",
+                                    // 质检通过但跳过构建
+                                    "skip_build", END,
+                                    // 质检失败，重新生成
+                                    "fail", "code_generator"
                             ))
                     .addEdge("project_builder", END)
 
@@ -158,5 +164,166 @@ public class CodeGenWorkflow {
         }
         // VUE_PROJECT 需要构建
         return "build";
+    }
+
+
+    /**
+     * 使用 Flux 流执行代码生成工作流
+     * <p>
+     * 该方法通过 Reactor 的 Flux 流异步执行整个代码生成工作流，
+     * 并通过 Server-Sent Events (SSE) 实时推送执行进度和结果。
+     * </p>
+     *
+     * @param originalPrompt 原始提示词，用于启动代码生成工作流
+     * @return Flux<String> 返回包含工作流执行事件的 Flux 流，每个事件都是格式化的 SSE 字符串
+     */
+    public Flux<String> executeWorkflowWithFlux(String originalPrompt) {
+        return Flux.create(sink -> {
+            Thread.startVirtualThread(() -> {
+                try {
+                    CompiledGraph<MessagesState<String>> workflow = createWorkflow();
+                    WorkflowContext initialContext = WorkflowContext.builder()
+                            .originalPrompt(originalPrompt)
+                            .currentStep("初始化")
+                            .build();
+                    // 发送工作流开始事件
+                    sink.next(formatSseEvent("workflow_start", Map.of(
+                            "message", "开始执行代码生成工作流",
+                            "originalPrompt", originalPrompt
+                    )));
+                    GraphRepresentation graph = workflow.getGraph(GraphRepresentation.Type.MERMAID);
+                    log.info("工作流图:\n{}", graph.content());
+
+                    int stepCounter = 1;
+                    // 逐个执行工作流步骤
+                    for ( NodeOutput<MessagesState<String>> step : workflow.stream(
+                            Map.of(WorkflowContext.WORKFLOW_CONTEXT_KEY, initialContext)
+                    )) {
+                        log.info("--- 第 {} 步完成 ---", stepCounter);
+                        WorkflowContext currentContext = WorkflowContext.getContext(step.state());
+                        if (currentContext != null) {
+                            // 发送步骤完成事件
+                            sink.next(formatSseEvent("step_completed", Map.of(
+                                    "stepNumber", stepCounter,
+                                    "currentStep", currentContext.getCurrentStep()
+                            )));
+                            log.info("当前步骤上下文: {}", currentContext);
+                        }
+                        stepCounter++;
+                    }
+                    // 发送工作流完成事件
+                    sink.next(formatSseEvent("workflow_completed", Map.of(
+                            "message", "代码生成工作流执行完成！"
+                    )));
+                    log.info("工作流执行完成！");
+                    sink.complete();
+                } catch (Exception e) {
+                    log.error("代码生成工作流执行失败: {}", e.getMessage(), e);
+                    // 发送错误事件
+                    sink.next(formatSseEvent("workflow_error", Map.of(
+                            "error", e.getMessage(),
+                            "message", "工作流执行失败"
+                    )));
+                    sink.error(e);
+                }
+            });
+        });
+    }
+
+    /**
+     * 使用 SseEmitter 执行代码生成工作流
+     * <p>
+     * 该方法通过 Spring 的 SseEmitter 异步执行整个代码生成工作流，
+     * 并通过 Server-Sent Events (SSE) 实时推送执行进度和结果。
+     * </p>
+     *
+     * @param originalPrompt 原始提示词，用于启动代码生成工作流
+     * @return SseEmitter 返回 SSE 发送器，用于向客户端推送工作流执行事件
+     */
+    public SseEmitter executeWorkflowWithSse(String originalPrompt) {
+        SseEmitter sseEmitter = new SseEmitter(30 * 60 * 1000L);
+        Thread.startVirtualThread(() -> {
+            try {
+                CompiledGraph<MessagesState<String>> workflow = createWorkflow();
+                WorkflowContext initialContext = WorkflowContext.builder()
+                        .originalPrompt(originalPrompt)
+                        .currentStep("初始化")
+                        .build();
+                // 发送工作流开始事件
+                sendSseEvent(sseEmitter, "workflow_start", Map.of(
+                        "message", "开始执行代码生成工作流",
+                        "originalPrompt", originalPrompt
+                ));
+                GraphRepresentation graph = workflow.getGraph(GraphRepresentation.Type.MERMAID);
+                log.info("工作流图:\n{}", graph.content());
+
+                int stepCounter = 1;
+                // 逐个执行工作流步骤
+                for ( NodeOutput<MessagesState<String>> step : workflow.stream(
+                        Map.of(WorkflowContext.WORKFLOW_CONTEXT_KEY, initialContext)
+                )) {
+                    log.info("--- 第 {} 步完成 ---", stepCounter);
+                    WorkflowContext currentContext = WorkflowContext.getContext(step.state());
+                    if (currentContext != null) {
+                        // 发送步骤完成事件
+                        sendSseEvent(sseEmitter, "step_completed", Map.of(
+                                "stepNumber", stepCounter,
+                                "currentStep", currentContext.getCurrentStep()
+                        ));
+                        log.info("当前步骤上下文: {}", currentContext);
+                    }
+                    stepCounter++;
+                }
+                // 发送工作流完成事件
+                sendSseEvent(sseEmitter, "workflow_completed", Map.of(
+                        "message", "代码生成工作流执行完成！"
+                ));
+                log.info("工作流执行完成！");
+                sseEmitter.complete();
+            } catch (Exception e) {
+                log.error("代码生成工作流执行失败: {}", e.getMessage(), e);
+                // 发送错误事件
+                sendSseEvent(sseEmitter, "workflow_error", Map.of(
+                        "error", e.getMessage(),
+                        "message", "工作流执行失败"
+                ));
+                sseEmitter.completeWithError(e);
+            }
+        }); 
+        return sseEmitter;
+    }
+
+    /**
+     * 格式化 SSE 事件
+     *
+     * @param eventType 事件类型
+     * @param data      事件数据
+     * @return 格式化后的 SSE 事件字符串
+     */
+    private String formatSseEvent(String eventType, Object data) {
+        try {
+            String jsonData = JSONUtil.toJsonStr(data);
+            return "event: " + eventType + "\ndata: " + jsonData + "\n\n";
+        } catch (Exception e) {
+            log.error("格式化 SSE 事件失败: {}", e.getMessage(), e);
+            return "event: error\ndata: {\"error\":\"格式化失败\"}\n\n";
+        }
+    }
+
+    /**
+     * 发送 SSE 事件
+     *
+     * @param emitter   SSE 发送器
+     * @param eventType 事件类型
+     * @param data      事件数据
+     */
+    private void sendSseEvent(SseEmitter emitter, String eventType, Object data) {
+        try {
+            emitter.send(SseEmitter.event()
+                    .name(eventType)
+                    .data(data));
+        } catch (Exception e) {
+            log.error("发送 SSE 事件失败: {}", e.getMessage(), e);
+        }
     }
 }
