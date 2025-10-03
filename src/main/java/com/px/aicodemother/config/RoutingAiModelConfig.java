@@ -1,7 +1,7 @@
 package com.px.aicodemother.config;
 
-import dev.langchain4j.model.chat.StreamingChatModel;
-import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -13,14 +13,14 @@ import org.springframework.context.annotation.Scope;
  *
  * @author: idpeng
  * @version: 1.0
- * @className: ReasoningStreamingChatModelConfig
- * @date: 2025/9/22 14:53
- * @description: 推理流式模型配置
+ * @className: RoutingAiModelConfig
+ * @date: 2025/10/2 18:08
+ * @description: TODO
  */
-@Configuration
-@ConfigurationProperties(prefix = "langchain4j.open-ai.reasoning-streaming-chat-model")
 @Data
-public class ReasoningStreamingChatModelConfig {
+@Configuration
+@ConfigurationProperties(prefix = "langchain4j.open-ai.routing-chat-model")
+public class RoutingAiModelConfig {
 
     private String baseUrl;
 
@@ -37,13 +37,13 @@ public class ReasoningStreamingChatModelConfig {
     private Boolean logResponses = false;
 
     /**
-     * 推理流式模型（用于 Vue 项目生成，带工具调用）
-     * @return 推理流式模型
+     * 创建一个路由模型，用于根据输入内容选择模型
+     * @return 路由模型
      */
     @Bean
     @Scope("prototype")
-    public StreamingChatModel reasoningStreamingChatModelPrototype() {
-        return OpenAiStreamingChatModel.builder()
+    public ChatModel routingChatModelPrototype() {
+        return OpenAiChatModel.builder()
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)
                 .modelName(modelName)

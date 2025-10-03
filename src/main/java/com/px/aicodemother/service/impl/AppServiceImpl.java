@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.px.aicodemother.ai.AiCodeGenTypeRoutingService;
+import com.px.aicodemother.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.px.aicodemother.constants.AppConstant;
 import com.px.aicodemother.core.AiCodeGeneratorFacade;
 import com.px.aicodemother.core.builder.VueProjectBuilder;
@@ -70,7 +71,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     private ScreenshotService screenshotService;
 
     @Resource
-    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
+    private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
 
     @Override
     public Long createApp(AppAddRequest appAddRequest, User loginUser) {
@@ -80,7 +81,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         // 检查初始化提示词长度是否超过限制
         ThrowUtils.throwIf(initPrompt.length() > 8000, ErrorCode.PARAMS_ERROR, "初始化提示词长度不能超过8000字符");
 
-        // ai智能选择代码生成类型
+        // 使用 AI 智能选择代码生成类型（多例模式）
+        AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService();
         CodeGenTypeEnum codeGenType = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
 
         // 构建应用对象，设置初始化提示词、用户ID和应用名称等信息

@@ -18,12 +18,12 @@ import org.springframework.context.annotation.Configuration;
  * @version: 1.0
  * @className: ImageCollectionServiceFactory
  * @date: 2025/9/26 23:57
- * @description: TODO
+ * @description: 图片收集服务工厂类，用于创建图片收集服务实例
  */
 @Slf4j
 @Configuration
 public class ImageCollectionServiceFactory {
-    @Resource
+    @Resource(name = "openAiChatModel")
     private ChatModel chatModel;
 
     @Resource
