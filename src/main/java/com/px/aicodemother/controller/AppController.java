@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
@@ -180,6 +181,11 @@ public class AppController {
      * @return 分页的应用VO列表
      */
     @PostMapping("/my/list/page/vo")
+    @Cacheable(
+            value = "good_app_page",
+            key = "T(com.px.aicodemother.utils.CacheKeyUtils).generateKey(#appQueryRequest)",
+            condition = "#appQueryRequest.pageNum <= 10"
+    )
     @Operation(summary = "获取用户应用列表（分页）", description = "获取用户应用列表（分页）",
             parameters = {
                 @Parameter(name = "appQueryRequest", description = "应用查询请求参数"),
