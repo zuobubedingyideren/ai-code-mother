@@ -3,7 +3,7 @@ package com.px.aicodemother.ai;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.px.aicodemother.ai.guardrail.PromptSafetyInputGuardrail;
-import com.px.aicodemother.ai.tools.*;
+import com.px.aicodemother.ai.tools.ToolManager;
 import com.px.aicodemother.exception.BusinessException;
 import com.px.aicodemother.exception.ErrorCode;
 import com.px.aicodemother.model.enums.CodeGenTypeEnum;
@@ -110,8 +110,11 @@ public class AiCodeGeneratorServiceFactory {
                         .tools(toolManager.getAllTools())
                         .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name())
                         )
+                        .maxSequentialToolsInvocations(30)
                         // 添加输入护轨
                         .inputGuardrails(new PromptSafetyInputGuardrail())
+                        // 添加输出护轨，为了流式输出，这里不使用
+                        // .outputGuardrails(new RetryOutputGuardrail())
                         .build();
             }
             case HTML, MULTI_FILE -> {
@@ -123,6 +126,8 @@ public class AiCodeGeneratorServiceFactory {
                         .chatMemory(chatMemory)
                         // 添加输入护轨
                         .inputGuardrails(new PromptSafetyInputGuardrail())
+                        // 添加输出护轨，为了流式输出，这里不使用
+                        // .outputGuardrails(new RetryOutputGuardrail())
                         .build();
             }
             default ->

@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  * @version: 1.0
  * @className: PromptSafetyInputGuardrail
  * @date: 2025/10/4 16:32
- * @description: TODO
+ * @description: 输入内容安全检查
  */
 public class PromptSafetyInputGuardrail implements InputGuardrail {
 
