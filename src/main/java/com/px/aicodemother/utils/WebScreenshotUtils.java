@@ -99,9 +99,44 @@ public class WebScreenshotUtils {
      */
     private static WebDriver initChromeDriver(int width, int height) {
         try {
-            // 自动管理 ChromeDriver
-            System.setProperty("wdm.chromeDriverMirrorUrl", "https://registry.npmmirror.com/binary.html?path=chromedriver");
-            WebDriverManager.chromedriver().useMirror().setup();
+            // 手动指定 ChromeDriver 路径，避免网络下载问题
+            String chromeDriverPath = System.getProperty("webdriver.chrome.driver");
+            if (chromeDriverPath == null || chromeDriverPath.isEmpty()) {
+                // 尝试常见的 ChromeDriver 路径
+                String[] possiblePaths = {
+                    "C:\\tools\\chromedriver\\chromedriver.exe",
+                    "C:\\chromedriver\\chromedriver.exe", 
+                    "D:\\tools\\chromedriver\\chromedriver.exe",
+                    System.getProperty("user.home") + "\\chromedriver\\chromedriver.exe"
+                };
+                
+                for (String path : possiblePaths) {
+                    File driverFile = new File(path);
+                    if (driverFile.exists()) {
+                        System.setProperty("webdriver.chrome.driver", path);
+                        log.info("找到 ChromeDriver: {}", path);
+                        break;
+                    }
+                }
+                
+                // 如果还是没找到，尝试使用 WebDriverManager 作为备选方案
+                if (System.getProperty("webdriver.chrome.driver") == null) {
+                    try {
+                        log.info("未找到本地 ChromeDriver，尝试使用 WebDriverManager 下载...");
+                        WebDriverManager chromeDriverManager = WebDriverManager.chromedriver();
+                        chromeDriverManager
+                                .clearDriverCache()
+                                .clearResolutionCache()
+                                .timeout(60)
+                                .setup();
+                    } catch (Exception wdmException) {
+                        log.warn("WebDriverManager 下载失败: {}", wdmException.getMessage());
+                        throw new BusinessException(ErrorCode.SYSTEM_ERROR, 
+                            "未找到 ChromeDriver，请手动下载并放置到以下路径之一：" + String.join(", ", possiblePaths));
+                    }
+                }
+            }
+            
             // 配置 Chrome 选项
             ChromeOptions options = new ChromeOptions();
             // 无头模式
@@ -116,8 +151,13 @@ public class WebScreenshotUtils {
             options.addArguments(String.format("--window-size=%d,%d", width, height));
             // 禁用扩展
             options.addArguments("--disable-extensions");
+            // 禁用图片加载以提高性能
+            options.addArguments("--disable-images");
+            // 禁用JavaScript（如果不需要的话）
+            // options.addArguments("--disable-javascript");
             // 设置用户代理
             options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+            
             // 创建驱动
             WebDriver driver = new ChromeDriver(options);
             // 设置页面加载超时
