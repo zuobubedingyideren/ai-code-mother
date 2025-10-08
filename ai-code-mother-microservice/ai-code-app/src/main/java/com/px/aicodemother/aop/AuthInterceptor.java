@@ -6,12 +6,10 @@ import com.px.aicodemother.exception.ErrorCode;
 import com.px.aicodemother.innerservice.InnerUserService;
 import com.px.aicodemother.model.entity.User;
 import com.px.aicodemother.model.enums.UserRoleEnum;
-import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -29,10 +27,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Aspect
 @Component
 public class AuthInterceptor {
-
-    @Resource
-    @Lazy
-    private InnerUserService userService;
 
 
     /**
